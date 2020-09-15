@@ -1,4 +1,5 @@
 const { get } = require("mongoose");
+const { response } = require("express");
 
 let db;
 // we create a new db request for a database
@@ -28,7 +29,26 @@ function checkDatabase() {
 
     getAll.onsuccess = function() {
         if(getAll.result.length > 0) {
-            
+            fetch("/api/transaction/bulk", {
+                method: "POST",
+                body: JSON.stringify(getAll.result),
+                headers: {
+                    Accept: "application/json, text/plain, */*", "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(() => {
+                // if successful, open a transaction on "pending" db
+                const transaction = db.transaction(["pending"], "readwrite");
+
+                // access "pending" object store
+                const store = transaction.objectStore("pending");
+
+                // clear all items in your store
+                store.clear();
+            });
         }
     }
 }
+// listen for the app to comeback online
+window.addEventListener("online", checkDatabase);
