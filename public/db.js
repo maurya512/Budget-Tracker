@@ -1,6 +1,3 @@
-const { get } = require("mongoose");
-const { response } = require("express");
-
 let db;
 // we create a new db request for a database
 const request = indexedDB.open("budget",1);
@@ -19,6 +16,21 @@ request.onsuccess = function(event) {
         checkDatabase();
     }
 };
+
+request.onerror = function(event) {
+    console.log("error" + event.target.errorCode);
+};
+
+function saveRecord(record) {
+    // create a transaction on the pending database with readwrite access
+    const transaction = db.transaction(["pending"], "readwrite");
+
+    // access your pending object store
+    const store = transaction.objectStore("pending");
+
+    // add record to the store
+    store.add(record);
+}
 
 function checkDatabase() {
     const transaction = db.transaction(["pending"], "readwrite");
